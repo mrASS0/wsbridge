@@ -1,0 +1,14 @@
+# Render blueprint: one web service, HTTPS included.
+services:
+  - type: web
+    name: wsbridge
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PUB_KEY
+        generateValue: true
+      - key: VIEW_KEY
+        generateValue: true

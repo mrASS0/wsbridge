@@ -1,0 +1,9 @@
+{
+  "name": "wsbridge",
+  "version": "2.0.0",
+  "description": "Minimal WebSocket frame relay (one publisher, many viewers)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" }
+}
