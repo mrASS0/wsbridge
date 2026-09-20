@@ -11,8 +11,11 @@
  *               https://<host>/health                     (status, JSON)
  *
  * The publisher is told how many viewers are connected ({viewers:n}) so it can
- * stop sending when nobody is watching. Ping/pong every 25 s on every socket:
- * dead connections are closed and re-established by the clients.
+ * stop sending when nobody is watching, and gets an {ack:n} for every frame
+ * received: keeping at most a couple of frames in flight bounds the latency to
+ * ~one frame even on a slow uplink. Slow viewers skip frames instead of
+ * accumulating them (latest-frame semantics). Ping/pong every 25 s on every
+ * socket: dead connections are closed and re-established by the clients.
  *
  * Config (environment): PUB_KEY, VIEW_KEY, PORT.
  */
@@ -76,7 +79,9 @@ function onPublisher(ws, r) {
   ws.on('message', (data, isBinary) => {
     if (!isBinary) return;
     st.last = Buffer.from(data); st.lastAt = Date.now(); st.frames++;
-    for (const v of st.viewers) if (v.readyState === 1 && v.bufferedAmount < 2 * MAX_FRAME) v.send(data, { binary: true });
+    // slow viewer (previous frame still unsent): skip, it will get the next one
+    for (const v of st.viewers) if (v.readyState === 1 && v.bufferedAmount === 0) v.send(data, { binary: true });
+    if (ws.readyState === 1) ws.send(JSON.stringify({ ack: st.frames }));
   });
   ws.on('close', () => { if (st.publisher === ws) { st.publisher = null; notify(r); } console.log(`[pub] closed room=${r} (${st.frames} frames)`); });
   ws.on('error', () => {});
